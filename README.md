@@ -1,3 +1,5 @@
+https://github.com/levrozhkov-dev/bad-server
+
 # Проектная работа "WebLarek. Плохой сервер.", спринт 17
 
 ## Информация о проекте
