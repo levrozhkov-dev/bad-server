@@ -30,6 +30,11 @@ export type ApiListResponse<Type> = {
     items: Type[]
 }
 
+const getCsrfHeaders = (): Record<string, string> => {
+  const csrfToken = getCookie('csrfToken') || getCookie('_csrf')
+  return csrfToken ? { 'X-CSRF-Token': csrfToken } : {}
+}
+
 class Api {
     private readonly baseUrl: string
     protected options: RequestInit
@@ -67,7 +72,10 @@ class Api {
 
     private refreshToken = () => {
         return this.request<UserResponseToken>('/auth/token', {
-            method: 'GET',
+            method: 'POST',
+            headers: {
+              ...getCsrfHeaders(),
+            },
             credentials: 'include',
         })
     }
@@ -84,6 +92,7 @@ class Api {
                 return Promise.reject(refreshData)
             }
             setCookie('accessToken', refreshData.accessToken)
+            setCookie('csrfToken', refreshData.csrfToken)
             return await this.request<T>(endpoint, {
                 ...options,
                 headers: {
@@ -293,7 +302,10 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
 
     logoutUser = () => {
         return this.request<ServerResponse<unknown>>('/auth/logout', {
-            method: 'GET',
+            method: 'POST',
+            headers: {
+              ...getCsrfHeaders(),
+            },
             credentials: 'include',
         })
     }
