@@ -47,7 +47,6 @@ const usePagination = <T, U>(
     }, [currentPage, limit, searchParams])
 
     const updateURL = (newParams: Record<string, any>) => {
-        3
         const updatedParams = new URLSearchParams(searchParams)
         Object.entries(newParams).forEach(([key, value]) => {
             if (value !== undefined) {

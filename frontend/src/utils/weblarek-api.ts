@@ -31,8 +31,9 @@ export type ApiListResponse<Type> = {
 }
 
 const getCsrfHeaders = (): Record<string, string> => {
-  const csrfToken = getCookie('csrfToken') || getCookie('_csrf')
-  return csrfToken ? { 'X-CSRF-Token': csrfToken } : {}
+    const csrfToken = getCookie('csrfToken') || getCookie('_csrf')
+
+    return csrfToken ? { 'X-CSRF-Token': csrfToken } : {}
 }
 
 class Api {
@@ -74,7 +75,7 @@ class Api {
         return this.request<UserResponseToken>('/auth/token', {
             method: 'POST',
             headers: {
-              ...getCsrfHeaders(),
+                ...getCsrfHeaders(),
             },
             credentials: 'include',
         })
@@ -304,14 +305,13 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
         return this.request<ServerResponse<unknown>>('/auth/logout', {
             method: 'POST',
             headers: {
-              ...getCsrfHeaders(),
+                ...getCsrfHeaders(),
             },
             credentials: 'include',
         })
     }
 
     createProduct = (data: Omit<IProduct, '_id'>) => {
-        console.log(data)
         return this.requestWithRefresh<IProduct>('/product', {
             method: 'POST',
             body: JSON.stringify(data),

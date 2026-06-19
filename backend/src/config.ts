@@ -4,6 +4,12 @@ import ms from 'ms'
 export const { PORT = '3000' } = process.env
 export const { DB_ADDRESS = 'mongodb://127.0.0.1:27017/weblarek' } = process.env
 export const { JWT_SECRET = 'JWT_SECRET' } = process.env
+export const ORIGIN_ALLOW = (
+    process.env.ORIGIN_ALLOW || 'http://localhost:5173,http://localhost'
+)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
 export const ACCESS_TOKEN = {
     secret: process.env.AUTH_ACCESS_TOKEN_SECRET || 'secret-dev',
     expiry: process.env.AUTH_ACCESS_TOKEN_EXPIRY || '10m',
@@ -22,7 +28,6 @@ export const REFRESH_TOKEN = {
         } as CookieOptions,
     },
 }
-
 export const CSRF_TOKEN = {
     header: 'x-csrf-token',
     cookie: {

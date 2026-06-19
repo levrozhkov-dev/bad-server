@@ -3,12 +3,13 @@ import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { Error as MongooseError } from 'mongoose'
+import { CSRF_TOKEN, REFRESH_TOKEN } from '../config'
 import BadRequestError from '../errors/bad-request-error'
 import ConflictError from '../errors/conflict-error'
 import NotFoundError from '../errors/not-found-error'
 import UnauthorizedError from '../errors/unauthorized-error'
 import User from '../models/user'
-import { CSRF_TOKEN, REFRESH_TOKEN } from '../config'
+import getSafeUserUpdate from '../utils/getSafeUserUpdate'
 
 const createCsrfToken = () => crypto.randomBytes(32).toString('hex')
 
@@ -36,7 +37,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const accessToken = user.generateAccessToken()
         const refreshToken = await user.generateRefreshToken()
         const csrfToken = setCsrfToken(res)
-        res.cookie(REFRESH_TOKEN.cookie.name, refreshToken, REFRESH_TOKEN.cookie.options)
+        res.cookie(
+            REFRESH_TOKEN.cookie.name,
+            refreshToken,
+            REFRESH_TOKEN.cookie.options
+        )
         return res.json({
             success: true,
             user,
@@ -62,7 +67,12 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         const accessToken = newUser.generateAccessToken()
         const refreshToken = await newUser.generateRefreshToken()
         const csrfToken = setCsrfToken(res)
-        res.cookie(REFRESH_TOKEN.cookie.name, refreshToken, REFRESH_TOKEN.cookie.options)
+
+        res.cookie(
+            REFRESH_TOKEN.cookie.name,
+            refreshToken,
+            REFRESH_TOKEN.cookie.options
+        )
         return res.status(constants.HTTP_STATUS_CREATED).json({
             success: true,
             user: newUser,
@@ -135,24 +145,41 @@ const deleteRefreshTokenInUser = async (
     return user
 }
 
+// Реализация удаления токена из базы может отличаться
+// POST /auth/logout
 const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
         await deleteRefreshTokenInUser(req, res, next)
         res.cookie(REFRESH_TOKEN.cookie.name, '', expireCookieOptions)
         res.cookie(CSRF_TOKEN.cookie.name, '', expireCsrfCookieOptions)
-        res.status(200).json({ success: true })
+        res.status(200).json({
+            success: true,
+        })
     } catch (error) {
         next(error)
     }
 }
 
-const refreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
+// POST /auth/token
+const refreshAccessToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     try {
-        const userWithRefreshTkn = await deleteRefreshTokenInUser(req, res, next)
+        const userWithRefreshTkn = await deleteRefreshTokenInUser(
+            req,
+            res,
+            next
+        )
         const accessToken = await userWithRefreshTkn.generateAccessToken()
         const refreshToken = await userWithRefreshTkn.generateRefreshToken()
         const csrfToken = setCsrfToken(res)
-        res.cookie(REFRESH_TOKEN.cookie.name, refreshToken, REFRESH_TOKEN.cookie.options)
+        res.cookie(
+            REFRESH_TOKEN.cookie.name,
+            refreshToken,
+            REFRESH_TOKEN.cookie.options
+        )
         return res.json({
             success: true,
             user: userWithRefreshTkn,
@@ -165,20 +192,11 @@ const refreshAccessToken = async (req: Request, res: Response, next: NextFunctio
 }
 
 const getCurrentUserRoles = async (
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    const userId = res.locals.user._id
     try {
-        await User.findById(userId, req.body, {
-            new: true,
-        }).orFail(
-            () =>
-                new NotFoundError(
-                    'Пользователь по заданному id отсутствует в базе'
-                )
-        )
         res.status(200).json(res.locals.user.roles)
     } catch (error) {
         next(error)
@@ -192,9 +210,20 @@ const updateCurrentUser = async (
 ) => {
     const userId = res.locals.user._id
     try {
-        const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
-            new: true,
-        }).orFail(
+        const userUpdate = getSafeUserUpdate(req.body)
+
+        if (!Object.keys(userUpdate).length) {
+            return next(new BadRequestError('Нет данных для обновления'))
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: userUpdate },
+            {
+                new: true,
+                runValidators: true,
+            }
+        ).orFail(
             () =>
                 new NotFoundError(
                     'Пользователь по заданному id отсутствует в базе'
@@ -209,10 +238,10 @@ const updateCurrentUser = async (
 export {
     getCurrentUser,
     getCurrentUserRoles,
+    getCsrfToken,
     login,
     logout,
     refreshAccessToken,
     register,
     updateCurrentUser,
-    getCsrfToken,
 }
