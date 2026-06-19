@@ -2,10 +2,18 @@ import { NextFunction, Request, Response } from 'express'
 import { FilterQuery, Error as MongooseError, Types } from 'mongoose'
 import BadRequestError from '../errors/bad-request-error'
 import NotFoundError from '../errors/not-found-error'
-import Order, { IOrder } from '../models/order'
+import Order, { IOrder, StatusType } from '../models/order'
 import Product, { IProduct } from '../models/product'
 import User from '../models/user'
-import escapeRegExp from '../utils/escapeRegExp';
+import escapeRegExp from '../utils/escapeRegExp'
+import getSafeSort from '../utils/getSafeSort'
+
+const orderSortFields = [
+    'createdAt',
+    'totalAmount',
+    'orderNumber',
+    'status',
+] as const
 
 // eslint-disable-next-line max-len
 // GET /orders?page=2&limit=5&sort=totalAmount&order=desc&orderDateFrom=2024-07-01&orderDateTo=2024-08-01&status=delivering&totalAmountFrom=100&totalAmountTo=1000&search=%2B1
@@ -31,13 +39,11 @@ export const getOrders = async (
 
         const filters: FilterQuery<Partial<IOrder>> = {}
 
-        if (status) {
-            if (typeof status === 'object') {
-                Object.assign(filters, status)
-            }
-            if (typeof status === 'string') {
-                filters.status = status
-            }
+        if (
+            typeof status === 'string' &&
+            Object.values(StatusType).includes(status as StatusType)
+        ) {
+            filters.status = status
         }
 
         if (totalAmountFrom) {
@@ -109,11 +115,12 @@ export const getOrders = async (
             filters.$or = searchConditions
         }
 
-        const sort: { [key: string]: any } = {}
-
-        if (sortField && sortOrder) {
-            sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
-        }
+        const sort = getSafeSort(
+            sortField,
+            sortOrder,
+            orderSortFields,
+            'createdAt'
+        )
 
         aggregatePipeline.push(
             { $sort: sort },
