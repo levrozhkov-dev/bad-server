@@ -6,6 +6,7 @@ import User, { IUser } from '../models/user'
 import escapeRegExp from '../utils/escapeRegExp'
 
 import getSafeSort from '../utils/getSafeSort'
+import getPagination from '../utils/getPagination'
 
 const customerSortFields = [
     'createdAt',
@@ -125,10 +126,11 @@ export const getCustomers = async (
             'createdAt'
         )
 
+        const pagination = getPagination(page, limit)
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: pagination.skip,
+            limit: pagination.limit,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -148,15 +150,15 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / pagination.limit)
 
         res.status(200).json({
             customers: users,
             pagination: {
                 totalUsers,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage: pagination.page,
+                pageSize: pagination.limit,
             },
         })
     } catch (error) {
