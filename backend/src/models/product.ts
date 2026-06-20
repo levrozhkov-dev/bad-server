@@ -1,6 +1,6 @@
 import { unlink } from 'fs'
 import mongoose, { Document } from 'mongoose'
-import { join } from 'path'
+import { isAbsolute, relative, resolve } from 'path'
 
 export interface IFile {
     fileName: string
@@ -48,24 +48,42 @@ const cardsSchema = new mongoose.Schema<IProduct>(
 
 cardsSchema.index({ title: 'text' })
 
+const publicDir = resolve(__dirname, '../public')
+
+function getPublicFilePath(imagePath: string) {
+    const filePath = resolve(publicDir, imagePath.replace(/^[/\\]+/, ''))
+    const relativePath = relative(publicDir, filePath)
+
+    if (relativePath.startsWith('..') || isAbsolute(relativePath)) {
+        return null
+    }
+
+    return filePath
+}
+
+function unlinkProductImage(imagePath: string) {
+    const filePath = getPublicFilePath(imagePath)
+
+    if (!filePath) {
+        return
+    }
+
+    unlink(filePath, (err) => console.log(err))
+}
+
 // Можно лучше: удалять старое изображением перед обновлением сущности
 cardsSchema.pre('findOneAndUpdate', async function deleteOldImage() {
     // @ts-ignore
     const updateImage = this.getUpdate().$set?.image
     const docToUpdate = await this.model.findOne(this.getQuery())
     if (updateImage && docToUpdate) {
-        unlink(
-            join(__dirname, `../public/${docToUpdate.image.fileName}`),
-            (err) => console.log(err)
-        )
+        unlinkProductImage(docToUpdate.image.fileName)
     }
 })
 
 // Можно лучше: удалять файл с изображением после удаление сущности
 cardsSchema.post('findOneAndDelete', async (doc: IProduct) => {
-    unlink(join(__dirname, `../public/${doc.image.fileName}`), (err) =>
-        console.log(err)
-    )
+    unlinkProductImage(doc.image.fileName)
 })
 
 export default mongoose.model<IProduct>('product', cardsSchema)

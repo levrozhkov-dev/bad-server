@@ -53,7 +53,6 @@ export default function AdminNewProduct() {
 
     const handleCreateProduct = async () => {
         if (!selectedFile || !selectedCategory) {
-            console.log('Не выбран файл или категория')
             return
         }
         const dataProduct = {
@@ -119,7 +118,7 @@ export default function AdminNewProduct() {
                 extraClass={styles.admin__file}
                 inputRef={fileRef}
                 label='Загрузить изображение'
-                accept='image/*,.png,.jpeg,.jpg,.svg'
+                accept='.png,.jpeg,.jpg,.gif,.webp'
             />
             <Button
                 type='submit'

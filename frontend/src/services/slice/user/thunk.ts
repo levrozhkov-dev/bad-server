@@ -28,6 +28,7 @@ export const registerUser = createAsyncThunk<
 >(`user/registerUser`, async (dataUser, { extra: api }) => {
     const data = await api.registerUser(dataUser)
     setCookie('accessToken', data.accessToken)
+    setCookie('csrfToken', data.csrfToken)
     return data
 })
 
@@ -36,6 +37,7 @@ export const loginUser = createAsyncThunk<UserResponseToken, UserLoginBodyDto>(
     async (dataUser, { extra: api }) => {
         const data = await api.loginUser(dataUser)
         setCookie('accessToken', data.accessToken)
+        setCookie('csrfToken', data.csrfToken)
         return data
     }
 )
@@ -46,6 +48,7 @@ export const logoutUser = createAsyncThunk<ServerResponse<unknown>, void>(
         const data = await api.logoutUser()
         setCookie('accessToken', '', { expires: new Date(0) })
         setCookie('refreshToken', '', { expires: new Date(0) })
+        setCookie('csrfToken', '', { expires: new Date(0) })
         return data
     }
 )

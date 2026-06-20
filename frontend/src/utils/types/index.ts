@@ -73,6 +73,7 @@ export type UserResponseToken = ServerResponse<{
     user: IUser
     accessToken: string
     refreshToken: string
+    csrfToken: string
 }>
 
 export type UserResponse = ServerResponse<{
@@ -82,6 +83,7 @@ export type UserResponse = ServerResponse<{
 export type RefreshResponse = ServerResponse<{
     accessToken: string
     refreshToken: string
+    csrfToken: string
 }>
 
 export type UserLoginBodyDto = {

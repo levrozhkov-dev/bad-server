@@ -28,7 +28,10 @@ export const useActionCreators = <Actions extends ActionCreatorsMapObject>(
 ): BoundActions<Actions> => {
     const dispatch = useDispatch()
 
-    return useMemo(() => bindActionCreators(actions, dispatch), [])
+    return useMemo(
+        () => bindActionCreators(actions, dispatch),
+        [actions, dispatch]
+    )
 }
 
 export type BoundActions<Actions extends ActionCreatorsMapObject> = {
@@ -40,3 +43,4 @@ export type BoundActions<Actions extends ActionCreatorsMapObject> = {
 export type BoundAsyncThunk<Thunk extends AsyncThunk<any, any, any>> = (
     ...args: Parameters<Thunk>
 ) => ReturnType<ReturnType<Thunk>>
+

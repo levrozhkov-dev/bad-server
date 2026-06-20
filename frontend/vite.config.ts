@@ -2,12 +2,12 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import svgr from "vite-plugin-svgr";
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [ svgr(), react(), tsconfigPaths({root: __dirname})],
+  plugins: [ svgr(), react() ],
   resolve: {
+    tsconfigPaths: true,
     alias: {
       $fonts: resolve('./src/vendor/fonts'),
       $assets: resolve('./src/assets'),
@@ -19,13 +19,13 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        loadPaths: [resolve(__dirname, 'src/scss')],
         additionalData: `
-          @use "./src/scss/variables" as *;
-          @use "./src/scss/mixins";
+          @use "variables" as *;
+          @use "mixins";
         `,
       },
 
     }
   },
-
 })

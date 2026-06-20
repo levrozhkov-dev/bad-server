@@ -71,7 +71,7 @@ export default function AdminEditProduct() {
                 title: currentProduct.title,
             })
         }
-    }, [currentProduct])
+    }, [currentProduct, setValuesForm])
 
     const handleUpdateProduct = async () => {
         if (!selectedCategory) {
@@ -150,7 +150,7 @@ export default function AdminEditProduct() {
                 extraClass={styles.admin__file}
                 inputRef={fileRef}
                 label='Заменить изображение'
-                accept='image/*,.png,.jpeg,.jpg,.svg'
+                accept='.png,.jpeg,.jpg,.gif,.webp'
                 fileName={currentProduct?.image.originalName}
             />
             <div className={styles.admin__buttons}>

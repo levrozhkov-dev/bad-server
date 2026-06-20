@@ -15,7 +15,7 @@ export default function AdminPage() {
         checkUserRoles().finally(() => {
             setLoading(false)
         })
-    }, [])
+    }, [checkUserRoles])
 
     useEffect(() => {
         if (!loading && !isAdmin) {
@@ -25,3 +25,4 @@ export default function AdminPage() {
 
     return <Outlet />
 }
+
